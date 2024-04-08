@@ -10,11 +10,11 @@
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
-  <groupId>com.acmecorp</groupId>
+  <groupId>com.caravan</groupId>
   <artifactId>xtendm3-extensions</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>Acme Corp XtendM3 Extensions</name>
+  <name>Caravan XtendM3 Extensions</name>
 
   <properties>
     <java.version>1.8</java.version>
