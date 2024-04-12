@@ -147,6 +147,85 @@ public class ExtendOutput extends ExtendM3Trigger {
    
     insertDataToEXT436(CONO, CONN, LINES);
     processSortedData(CONO, CONN, ROW_SIZE);
+    computeTotalPageEXT434(CONO, CONN);
+  }
+  
+  /**
+   * Get total number of pages for EXT434
+   * @params CONO - Input CONO
+   * @params CONN - Input shipment number
+   * @return nothing
+  */
+  void computeTotalPageEXT434(int CONO, int CONN) {
+    DBAction query = database.table("EXT434").index("00").selection("EXCONA", "EXTYPE", "EXPAGE").build();
+    DBContainer container = query.createContainer();
+    container.set("EXCONO", CONO);
+    container.set("EXCONN", CONN);
+    
+    ArrayList<Map<String, String>> LINES = new ArrayList<Map<String, String>>();
+    
+    ArrayList<Map<String, String>> CONA_LINES = new ArrayList<Map<String, String>>();
+   
+    String currCONA = null;
+    int ctr = 0;
+   
+    query.readAll(container, 2, MAX_RECORDS, { DBContainer data ->
+      Map result = new HashMap(); 
+      
+      String CONA = data.get("EXCONA");
+      
+      if(currCONA == null) {
+        currCONA = CONA;
+      }
+      
+      if(!currCONA.equals(CONA)) {
+        updateMaxPageEXT434(CONO, CONN, currCONA, ctr);
+        ctr = 0;
+        CONA_LINES.clear();
+        currCONA = CONA;
+      } 
+      
+      result.put("CONA", data.get("EXCONA"));
+      result.put("TYPE", data.get("EXTYPE") as String);
+      result.put("PAGE", data.get("EXPAGE") as String);
+      
+      CONA_LINES.add(result);
+      
+      ctr++;
+    });
+    
+    updateMaxPageEXT434(CONO, CONN, currCONA, ctr);
+  }
+  
+  /**
+   * Update MXPG, DPGN in EXT434 Table
+   * @params CONO - Input CONO
+   * @params CONN - Input shipment number
+   * @params CONA - Input consignee number
+   * @params val - Input total pages
+   * @return nothing
+  */
+  void updateMaxPageEXT434(int CONO, int CONN, String CONA, int val) {
+    DBAction query = database.table("EXT434").index("00").build();
+    DBContainer container = query.getContainer();
+    container.set("EXCONO", CONO);
+    container.set("EXCONN", CONN);
+    container.set("EXCONA", CONA);
+    
+    int ctr = 1;
+    
+    Closure<?> updateCallBack = { LockedResult lockedResult ->
+      lockedResult.set("EXMXPG", val);
+      lockedResult.set("EXDPGN", ctr);
+      lockedResult.set("EXCHNO", (int)lockedResult.get("EXCHNO") + 1);
+      lockedResult.set("EXLMDT", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).toInteger());
+      lockedResult.set("EXCHID", program.getUser());
+      
+      lockedResult.update();
+      ctr++;
+    };
+    
+    query.readAllLock(container, 3, updateCallBack);
   }
   
   /**
@@ -155,7 +234,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONN - Input shipment number
    * @params ROW_SIZE - Input row size
    * @return nothing
-   */
+  */
   void processSortedData(int CONO, int CONN, int ROW_SIZE) {
     DBAction SORTED_query = database.table("EXT436").index("00").selectAllFields().build();
     DBContainer SORTED_container = SORTED_query.createContainer();
@@ -240,7 +319,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONN - Input shipment number
    * @params LINES - containing the lines to be inserted
    * @return nothing
-   */
+  */
   void insertDataToEXT436(int CONO, int CONN, ArrayList<Map<String, String>> LINES) {
     DBAction LINE_query = database.table("EXT436").index("00").build();
     DBContainer LINE_container = LINE_query.getContainer();
@@ -275,7 +354,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONO - Input company
    * @params ITNO - Input item number
    * @return block
-   */
+  */
   String getBlock(int CONO, String ITNO) {
     DBAction query = database.table("MITMAS").index("00").selection("MMCFI4").build();
     DBContainer container = query.createContainer();
@@ -298,7 +377,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONN - Input shipment number
    * @params ROW_SIZE - Input row size
    * @return nothing
-   */
+  */
   void startMMS480PFv3(int CONO, int INOU, int CONN, int ROW_SIZE) {
     deleteRecordsByCONN(CONO, CONN, "EXT479");
     deleteRecordsByCONN(CONO, CONN, "EXT480");
@@ -347,6 +426,86 @@ public class ExtendOutput extends ExtendM3Trigger {
     });
    
     insertDataToEXT480(CONO, CONN, LINES);
+    computeTotalPageEXT479(CONO, CONN);
+  }
+  
+  /**
+   * Get total number of pages for EXT479
+   * @params CONO - Input CONO
+   * @params CONN - Input shipment number
+   * @return nothing
+  */
+  void computeTotalPageEXT479(int CONO, int CONN) {
+    DBAction query = database.table("EXT479").index("00").selection("EXDLIX", "EXCONA", "EXTYPE", "EXPAGE").build();
+    DBContainer container = query.createContainer();
+    container.set("EXCONO", CONO);
+    container.set("EXCONN", CONN);
+    
+    ArrayList<Map<String, String>> LINES = new ArrayList<Map<String, String>>();
+    
+    ArrayList<Map<String, String>> DLIX_LINES = new ArrayList<Map<String, String>>();
+   
+    int currDLIX = -1;
+    int ctr = 0;
+   
+    query.readAll(container, 2, MAX_RECORDS, { DBContainer data ->
+      Map result = new HashMap(); 
+      
+      int DLIX = data.get("EXDLIX");
+      
+      if(currDLIX == -1) {
+        currDLIX = DLIX;
+      }
+      
+      if(currDLIX != DLIX) {
+        updateMaxPageEXT479(CONO, CONN, currDLIX, ctr);
+        ctr = 0;
+        DLIX_LINES.clear();
+        currDLIX = DLIX;
+      } 
+      
+      result.put("DLIX", data.get("EXDLIX") as String);
+      result.put("CONA", data.get("EXCONA"));
+      result.put("TYPE", data.get("EXTYPE") as String);
+      result.put("PAGE", data.get("EXPAGE") as String);
+      
+      DLIX_LINES.add(result);
+      
+      ctr++;
+    });
+    
+    updateMaxPageEXT479(CONO, CONN, currDLIX, ctr);
+  }
+  
+  /**
+   * Update MXPG, DPGN in EXT479 Table
+   * @params CONO - Input CONO
+   * @params CONN - Input shipment number
+   * @params DLIX - Input delivery number
+   * @params val - Input total pages
+   * @return nothing
+  */
+  void updateMaxPageEXT479(int CONO, int CONN, int DLIX, int val) {
+    DBAction query = database.table("EXT479").index("00").build();
+    DBContainer container = query.getContainer();
+    container.set("EXCONO", CONO);
+    container.set("EXCONN", CONN);
+    container.set("EXDLIX", DLIX);
+    
+    int ctr = 1;
+    
+    Closure<?> updateCallBack = { LockedResult lockedResult ->
+      lockedResult.set("EXMXPG", val);
+      lockedResult.set("EXDPGN", ctr);
+      lockedResult.set("EXCHNO", (int)lockedResult.get("EXCHNO") + 1);
+      lockedResult.set("EXLMDT", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).toInteger());
+      lockedResult.set("EXCHID", program.getUser());
+      
+      lockedResult.update();
+      ctr++;
+    };
+    
+    query.readAllLock(container, 3, updateCallBack);
   }
   
   /**
@@ -354,7 +513,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONA - Input consignee
    * @params CONN - Input shipment number
    * @return boolean
-   */
+  */
   boolean checkCONA(String CONA) {
     if(CONA.length() >= 4) {
       char[] ch = CONA.toCharArray();
@@ -374,7 +533,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONN - Input shipment number
    * @params LINES - containing the lines to be inserted
    * @return nothing
-   */
+  */
   void insertDataToEXT480(int CONO, int CONN, ArrayList<Map<String, String>> LINES) {
     DBAction LINE_query = database.table("EXT480").index("00").build();
     DBContainer LINE_container = LINE_query.getContainer();
@@ -451,7 +610,7 @@ public class ExtendOutput extends ExtendM3Trigger {
    * @params CONN - Input shipment number
    * @params table - Input Xtend Table
    * @return nothing
-   */
+  */
   void deleteRecordsByCONN(int CONO, int CONN, String table) {
     DBAction query = database.table(table).index("00").build();
     DBContainer container = query.createContainer();
